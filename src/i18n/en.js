@@ -14,4 +14,6 @@ export default {
   reviews: 'Reviews',
   reviewedOn: 'Reviewed on',
   noProductFound: 'No product found',
+  productInsights: 'Product Insights',
+  close: 'Close',
 };

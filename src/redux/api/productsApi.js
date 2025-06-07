@@ -1,5 +1,5 @@
 import {rootApi} from '../../api/apiCall';
-import {GET_PRODUCT_URL} from '../../api/url';
+import {GEMINI_API_KEY, GET_PRODUCT_URL} from '../../api/url';
 
 export const productsApi = rootApi.injectEndpoints({
   endpoints: build => ({
@@ -33,6 +33,31 @@ export const productsApi = rootApi.injectEndpoints({
       }),
       providesTags: ['products'],
     }),
+    getGeminiAnalysis: build.mutation({
+      query: product => ({
+        url: `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: {
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                {
+                  text: `Analyze this product and suggest highlights, use cases, and potential issues:\n\n${JSON.stringify(
+                    product,
+                    null,
+                    2,
+                  )}`,
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    }),
   }),
   overrideExisting: true,
 });
@@ -41,4 +66,5 @@ export const {
   useLazyGetProductsQuery,
   useGetProductByIdQuery,
   useLazySearchProductsQuery,
+  useGetGeminiAnalysisMutation,
 } = productsApi;

@@ -5,6 +5,7 @@ import {
   ScrollView,
   FlatList,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -23,19 +24,28 @@ import {
   addProductAction,
   removeProductAction,
 } from '../../../redux/action/favoritesAction';
-import {useGetProductByIdQuery} from '../../../redux/api/productsApi';
+import {
+  useGetGeminiAnalysisMutation,
+  useGetProductByIdQuery,
+} from '../../../redux/api/productsApi';
 import CLoader from '../../../components/common/CLoader';
 import FastImage from 'react-native-fast-image';
+import images from '../../../assets/images';
+import GeminiProductsDetails from '../../../components/models/GeminiProductsDetails';
 
 export default function ProductDetails({route}) {
   const item = route?.params?.item;
 
   const {data: product, isLoading} = useGetProductByIdQuery(item?.id);
+  const [getGeminiAnalysis, {isLoading: loadingGemini}] =
+    useGetGeminiAnalysisMutation();
 
   const favoriteProducts = useSelector(state => state.favorites);
   const dispatch = useDispatch();
 
   const [selectedImage, setSelectedImage] = useState('');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [geminiMessage, setGeminiMessage] = useState('');
 
   useEffect(() => {
     if (product?.images?.[0]) {
@@ -44,6 +54,34 @@ export default function ProductDetails({route}) {
   }, [product]);
 
   const onPressImage = item => setSelectedImage(item);
+
+  const onPressClose = () => setModalVisible(false);
+
+  const onPressFavorite = () => {
+    const isAlreadyFavorite = favoriteProducts.some(p => p.id === product?.id);
+
+    if (isAlreadyFavorite) {
+      dispatch(removeProductAction(product?.id));
+    } else {
+      const updatedItem = {
+        ...product,
+        isFavorite: true,
+      };
+      dispatch(addProductAction(updatedItem));
+    }
+  };
+
+  const onPressAnalyze = async () => {
+    try {
+      const response = await getGeminiAnalysis(product).unwrap();
+      const message = response?.candidates?.[0]?.content?.parts?.[0]?.text;
+      setGeminiMessage(message || 'No insights available.');
+      setModalVisible(true);
+    } catch (error) {
+      setGeminiMessage('Unable to fetch analysis.');
+      setModalVisible(true);
+    }
+  };
 
   const renderImage = ({item: image}) => (
     <TouchableOpacity onPress={() => onPressImage(image)}>
@@ -109,20 +147,6 @@ export default function ProductDetails({route}) {
       {index !== product?.reviews.length - 1 && <CDivider />}
     </View>
   );
-
-  const onPressFavorite = () => {
-    const isAlreadyFavorite = favoriteProducts.some(p => p.id === product?.id);
-
-    if (isAlreadyFavorite) {
-      dispatch(removeProductAction(product?.id));
-    } else {
-      const updatedItem = {
-        ...product,
-        isFavorite: true,
-      };
-      dispatch(addProductAction(updatedItem));
-    }
-  };
 
   const renderTag = tag => (
     <View key={tag} style={localStyles.tag}>
@@ -265,8 +289,22 @@ export default function ProductDetails({route}) {
             />
           </View>
         </ScrollView>
+        <TouchableOpacity
+          style={localStyles.geminiContainer}
+          onPress={onPressAnalyze}>
+          <Image
+            source={images.gemini}
+            style={localStyles.geminiImageStyle}
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
       </View>
-      {!!isLoading && <CLoader />}
+      <GeminiProductsDetails
+        visible={modalVisible}
+        geminiMessage={geminiMessage}
+        onPressClose={onPressClose}
+      />
+      {(!!isLoading || !!loadingGemini) && <CLoader />}
     </CSafeAreaView>
   );
 }
@@ -347,5 +385,19 @@ const localStyles = StyleSheet.create({
   },
   reviewHeader: {
     ...styles.rowSpaceBetween,
+  },
+  geminiImageStyle: {
+    width: moderateScale(32),
+    height: moderateScale(32),
+  },
+  geminiContainer: {
+    position: 'absolute',
+    bottom: moderateScale(20),
+    right: moderateScale(20),
+    width: moderateScale(50),
+    height: moderateScale(50),
+    backgroundColor: colors.grayScale3,
+    borderRadius: moderateScale(40),
+    ...styles.center,
   },
 });
