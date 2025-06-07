@@ -1,0 +1,17 @@
+export default {
+  home: 'Home',
+  favorites: 'Favorites',
+  searchProducts: 'Search Products here.....',
+  products: 'Products',
+  favorites: 'Favorites',
+  noFavoritesFound: 'No favorites found',
+  searchFavoriteProducts: 'Search Favorites Products here.....',
+  deliveringTo: 'Delivering to',
+  change: 'Change',
+  inStock: 'In Stock',
+  description: 'Description',
+  tags: 'Tags',
+  reviews: 'Reviews',
+  reviewedOn: 'Reviewed on',
+  noProductFound: 'No product found',
+};
