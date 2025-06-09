@@ -30,13 +30,3 @@ const scale = size => (screenWidth / sampleWidth) * size;
 export function moderateScale(size, factor = 0.5) {
   return size + (scale(size) - size) * factor;
 }
-
-export const iosReelHeight = screenFullHeight - getHeight(100);
-export const androidReelHeight = screenFullHeight - getHeight(70);
-
-export const ApiType = {
-  GET: 'GET',
-  POST: 'POST',
-  PUT: 'PUT',
-  DELETE: 'DELETE',
-};
