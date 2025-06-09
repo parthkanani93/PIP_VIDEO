@@ -1,5 +1,5 @@
 import {createApi, fetchBaseQuery} from '@reduxjs/toolkit/query/react';
-import {BASE_URL} from './url';
+import {BASE_URL} from '@env';
 
 export const rootApi = createApi({
   reducerPath: 'rootApi',

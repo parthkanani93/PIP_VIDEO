@@ -1,5 +1,6 @@
 import {rootApi} from '../../api/apiCall';
-import {GEMINI_API_KEY, GET_PRODUCT_URL} from '../../api/url';
+import {GET_PRODUCT_URL} from '../../api/url';
+import {GEMINI_API_KEY} from '@env';
 
 export const productsApi = rootApi.injectEndpoints({
   endpoints: build => ({
