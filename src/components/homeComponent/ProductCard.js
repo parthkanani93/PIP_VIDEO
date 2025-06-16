@@ -15,8 +15,7 @@ export default function ProductCard(props) {
   const navigation = useNavigation();
   const {item, onPressFavorite, favoriteProducts} = props;
 
-  const onPressDetail = () =>
-    navigation.navigate(StackNav.ProductDetails, {item: item});
+  const onPressDetail = () => navigation.navigate(StackNav.VideoScreen);
 
   return (
     <TouchableOpacity

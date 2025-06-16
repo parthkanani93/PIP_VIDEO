@@ -6,4 +6,5 @@ export const TabNav = {
 export const StackNav = {
   ProductDetails: 'ProductDetails',
   TabNavigation: 'TabNavigation',
+  VideoScreen: 'VideoScreen',
 };

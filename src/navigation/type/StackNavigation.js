@@ -23,6 +23,10 @@ export default function StackNavigation() {
         name={StackNav.ProductDetails}
         component={StackRoute.ProductDetails}
       />
+      <Stack.Screen
+        name={StackNav.VideoScreen}
+        component={StackRoute.VideoScreen}
+      />
     </Stack.Navigator>
   );
 }
