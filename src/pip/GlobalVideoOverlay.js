@@ -1,7 +1,6 @@
-// GlobalVideoOverlay.js - Renders the global video player
+// GlobalVideoOverlay.js - Global overlay that persists across screens
 import React from 'react';
 import {View, StyleSheet} from 'react-native';
-
 import GlobalVideoPlayer from './GlobalVideoPlayer';
 import {useVideo} from './VideoContext';
 
@@ -12,20 +11,38 @@ const GlobalVideoOverlay = () => {
     stopVideo,
     setIsPiPActive,
     setIsFullscreenActive,
+    isGlobalPiP,
+    setIsGlobalPiP,
   } = useVideo();
 
-  if (!currentVideo) return null;
+  // Only render if we have a video AND it's either not in PiP mode OR it's global PiP
+  if (!currentVideo || (!isGlobalPiP && !currentVideo.forceGlobal)) return null;
 
   const handlePiPToggle = isActive => {
     setIsPiPActive(isActive);
+    if (isActive) {
+      setIsGlobalPiP(true);
+    }
   };
 
   const handleFullscreenToggle = isActive => {
     setIsFullscreenActive(isActive);
+    // Exit global PiP when going fullscreen
+    if (isActive) {
+      setIsGlobalPiP(false);
+    }
   };
 
   const handleVideoEnd = () => {
     if (currentVideo.autoClose !== false) {
+      stopVideo();
+    }
+  };
+
+  const handlePiPExit = () => {
+    setIsGlobalPiP(false);
+    // Optionally stop the video completely or keep it paused
+    if (currentVideo.stopOnPiPExit !== false) {
       stopVideo();
     }
   };
@@ -38,8 +55,10 @@ const GlobalVideoOverlay = () => {
         onPiPToggle={handlePiPToggle}
         onFullscreenToggle={handleFullscreenToggle}
         onEnd={handleVideoEnd}
+        onPiPExit={handlePiPExit}
         allowPiP={currentVideo.allowPiP !== false}
         pipSize={currentVideo.pipSize}
+        forcePiP={isGlobalPiP}
         {...currentVideo.playerProps}
       />
     </View>
@@ -54,6 +73,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     pointerEvents: 'box-none',
+    zIndex: 9999,
   },
 });
 

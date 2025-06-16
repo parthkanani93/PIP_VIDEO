@@ -1,3 +1,4 @@
+// GlobalVideoPlayer.js
 import React, {
   useState,
   useRef,
@@ -41,12 +42,14 @@ const GlobalVideoPlayer = forwardRef(
       pipSize = {width: 200, height: 120},
       onPiPToggle,
       onFullscreenToggle,
+      onPiPExit,
+      forcePiP = false,
       ...otherProps
     },
     ref,
   ) => {
     const [paused, setPaused] = useState(initialPaused);
-    const [isPiP, setIsPiP] = useState(false);
+    const [isPiP, setIsPiP] = useState(forcePiP);
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [showControls, setShowControls] = useState(true);
     const [duration, setDuration] = useState(0);
@@ -137,6 +140,7 @@ const GlobalVideoPlayer = forwardRef(
     const exitPiP = () => {
       setIsPiP(false);
       onPiPToggle?.(false);
+      onPiPExit?.();
     };
 
     const toggleFullscreen = () => {
@@ -186,6 +190,12 @@ const GlobalVideoPlayer = forwardRef(
       setCurrentTime(data.currentTime);
       onProgress?.(data);
     };
+
+    useEffect(() => {
+      if (forcePiP !== isPiP) {
+        setIsPiP(forcePiP);
+      }
+    }, [forcePiP]);
 
     useEffect(() => {
       if (paused) {

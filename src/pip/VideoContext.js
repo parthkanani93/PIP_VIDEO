@@ -7,6 +7,7 @@ export const VideoProvider = ({children}) => {
   const [currentVideo, setCurrentVideo] = useState(null);
   const [isPiPActive, setIsPiPActive] = useState(false);
   const [isFullscreenActive, setIsFullscreenActive] = useState(false);
+  const [isGlobalPiP, setIsGlobalPiP] = useState(false); // New state for global PiP
   const videoPlayerRef = useRef(null);
 
   const playVideo = (videoSource, options = {}) => {
@@ -20,6 +21,16 @@ export const VideoProvider = ({children}) => {
     setCurrentVideo(null);
     setIsPiPActive(false);
     setIsFullscreenActive(false);
+    setIsGlobalPiP(false);
+  };
+
+  const enableGlobalPiP = (videoSource, options = {}) => {
+    setCurrentVideo({
+      source: videoSource,
+      ...options,
+    });
+    setIsGlobalPiP(true);
+    setIsPiPActive(true);
   };
 
   const togglePiP = () => {
@@ -32,19 +43,23 @@ export const VideoProvider = ({children}) => {
     if (videoPlayerRef.current) {
       videoPlayerRef.current.exitPiP();
     }
+    setIsGlobalPiP(false);
   };
 
   const value = {
     currentVideo,
     isPiPActive,
     isFullscreenActive,
+    isGlobalPiP,
     videoPlayerRef,
     playVideo,
     stopVideo,
+    enableGlobalPiP,
     togglePiP,
     exitPiP,
     setIsPiPActive,
     setIsFullscreenActive,
+    setIsGlobalPiP,
   };
 
   return (

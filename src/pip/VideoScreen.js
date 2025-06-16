@@ -6,34 +6,41 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
+  SafeAreaView,
 } from 'react-native';
 import {useVideo} from './VideoContext';
 import GlobalVideoPlayer from './GlobalVideoPlayer';
 
 const {width} = Dimensions.get('window');
 
-const VideoScreen = () => {
-  const {playVideo, currentVideo, isPiPActive} = useVideo();
+const VideoScreen = ({navigation}) => {
+  const {enableGlobalPiP, currentVideo, isPiPActive, isGlobalPiP} = useVideo();
 
   const videoSources = [
     {
       id: 1,
-      title: 'Sample Video 1',
+      title: 'Big Buck Bunny',
       uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     },
     {
       id: 2,
-      title: 'Sample Video 2',
+      title: 'Elephants Dream',
       uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
+    },
+    {
+      id: 3,
+      title: 'For Bigger Blazes',
+      uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     },
   ];
 
-  const handlePlayVideo = video => {
-    playVideo(
+  const handlePlayGlobalVideo = video => {
+    enableGlobalPiP(
       {uri: video.uri},
       {
         allowPiP: true,
         pipSize: {width: 200, height: 120},
+        stopOnPiPExit: false,
         playerProps: {
           resizeMode: 'contain',
           controls: true,
@@ -43,50 +50,75 @@ const VideoScreen = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Video Gallery</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView>
+        <Text style={styles.title}>Video Screen</Text>
 
-      {/* Embedded Video Player */}
-      <View style={styles.embeddedSection}>
-        <Text style={styles.sectionTitle}>Embedded Player</Text>
-        <GlobalVideoPlayer
-          source={{
-            uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-          }}
-          style={styles.embeddedVideo}
-          allowPiP={true}
-          pipSize={{width: 180, height: 100}}
-          onPiPToggle={isActive => {
-            console.log('Embedded video PiP:', isActive);
-          }}
-        />
-      </View>
+        {/* Embedded Video Player - This one doesn't persist across screens */}
+        <View style={styles.embeddedSection}>
+          <Text style={styles.sectionTitle}>
+            Embedded Player (Screen-local)
+          </Text>
+          <GlobalVideoPlayer
+            source={{
+              uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+            }}
+            style={styles.embeddedVideo}
+            allowPiP={false} // Disable PiP for embedded player to avoid conflicts
+            onPiPToggle={isActive => {
+              console.log('Embedded video PiP:', isActive);
+            }}
+          />
+        </View>
 
-      {/* Video List */}
-      <View style={styles.videoList}>
-        <Text style={styles.sectionTitle}>Global Player Videos</Text>
-        {videoSources.map(video => (
+        {/* Global Video List */}
+        <View style={styles.videoList}>
+          <Text style={styles.sectionTitle}>Global PiP Videos</Text>
+          <Text style={styles.subtitle}>
+            These videos will persist across screens when in PiP mode
+          </Text>
+
+          {videoSources.map(video => (
+            <TouchableOpacity
+              key={video.id}
+              style={styles.videoItem}
+              onPress={() => handlePlayGlobalVideo(video)}>
+              <Text style={styles.videoTitle}>{video.title}</Text>
+              <Text style={styles.playText}>Tap to play globally</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Navigation Buttons */}
+        <View style={styles.navigationSection}>
           <TouchableOpacity
-            key={video.id}
-            style={styles.videoItem}
-            onPress={() => handlePlayVideo(video)}>
-            <Text style={styles.videoTitle}>{video.title}</Text>
-            <Text style={styles.playText}>Tap to play</Text>
+            style={styles.navButton}
+            onPress={() => navigation.navigate('Home')}>
+            <Text style={styles.buttonText}>Go to Home</Text>
           </TouchableOpacity>
-        ))}
-      </View>
 
-      {/* Status Info */}
-      <View style={styles.statusSection}>
-        <Text style={styles.sectionTitle}>Status</Text>
-        <Text style={styles.statusText}>
-          Global Video Active: {currentVideo ? 'Yes' : 'No'}
-        </Text>
-        <Text style={styles.statusText}>
-          PiP Active: {isPiPActive ? 'Yes' : 'No'}
-        </Text>
-      </View>
-    </ScrollView>
+          <TouchableOpacity
+            style={styles.navButton}
+            onPress={() => navigation.navigate('Other')}>
+            <Text style={styles.buttonText}>Go to Other Screen</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Status Info */}
+        <View style={styles.statusSection}>
+          <Text style={styles.sectionTitle}>Status</Text>
+          <Text style={styles.statusText}>
+            Global Video Active: {currentVideo ? 'Yes' : 'No'}
+          </Text>
+          <Text style={styles.statusText}>
+            PiP Active: {isPiPActive ? 'Yes' : 'No'}
+          </Text>
+          <Text style={styles.statusText}>
+            Global PiP: {isGlobalPiP ? 'Yes' : 'No'}
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -108,6 +140,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 15,
+    fontStyle: 'italic',
   },
   embeddedVideo: {
     width: width - 40,
@@ -135,6 +173,23 @@ const styles = StyleSheet.create({
   playText: {
     color: '#007AFF',
     fontSize: 14,
+  },
+  navigationSection: {
+    margin: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  navButton: {
+    backgroundColor: '#34C759',
+    padding: 15,
+    borderRadius: 8,
+    flex: 0.48,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   statusSection: {
     margin: 20,
