@@ -3,6 +3,7 @@ import React from 'react';
 import {View, StyleSheet} from 'react-native';
 import GlobalVideoPlayer from './GlobalVideoPlayer';
 import {useVideo} from './VideoContext';
+import {useSelector} from 'react-redux';
 
 const GlobalVideoOverlay = () => {
   const {
@@ -14,6 +15,7 @@ const GlobalVideoOverlay = () => {
     isGlobalPiP,
     setIsGlobalPiP,
   } = useVideo();
+  const videoReducer = useSelector(state => state.video);
 
   // Only render if we have a video AND it's either not in PiP mode OR it's global PiP
   if (!currentVideo || (!isGlobalPiP && !currentVideo.forceGlobal)) return null;
@@ -51,6 +53,7 @@ const GlobalVideoOverlay = () => {
     <View style={styles.overlay} pointerEvents="box-none">
       <GlobalVideoPlayer
         ref={videoPlayerRef}
+        onLoad={() => videoPlayerRef.current?.seek(videoReducer.currentTime)}
         source={currentVideo.source}
         onPiPToggle={handlePiPToggle}
         onFullscreenToggle={handleFullscreenToggle}

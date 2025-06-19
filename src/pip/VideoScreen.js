@@ -10,11 +10,17 @@ import {
 } from 'react-native';
 import {useVideo} from './VideoContext';
 import GlobalVideoPlayer from './GlobalVideoPlayer';
+import {useDispatch, useSelector} from 'react-redux';
+import {changeCurrentTime} from '../redux/action/videoAction';
 
 const {width} = Dimensions.get('window');
 
 const VideoScreen = ({navigation}) => {
   const {enableGlobalPiP, currentVideo, isPiPActive, isGlobalPiP} = useVideo();
+  const dispatch = useDispatch();
+  const videoReducer = useSelector(state => state.video);
+
+  console.log('VideoReducer State:', videoReducer.currentTime);
 
   const videoSources = [
     {
@@ -35,6 +41,8 @@ const VideoScreen = ({navigation}) => {
   ];
 
   const handlePlayGlobalVideo = video => {
+    navigation.goBack();
+
     enableGlobalPiP(
       {uri: video.uri},
       {
@@ -61,12 +69,15 @@ const VideoScreen = ({navigation}) => {
           </Text>
           <GlobalVideoPlayer
             source={{
-              uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+              uri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
             }}
             style={styles.embeddedVideo}
             allowPiP={false} // Disable PiP for embedded player to avoid conflicts
             onPiPToggle={isActive => {
               console.log('Embedded video PiP:', isActive);
+            }}
+            onProgress={({currentTime}) => {
+              dispatch(changeCurrentTime(currentTime));
             }}
           />
         </View>
