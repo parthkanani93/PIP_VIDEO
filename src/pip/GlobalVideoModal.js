@@ -364,9 +364,6 @@ export const GlobalVideoModal = () => {
     }
   };
 
-  console.log('isPiP===>', isPiP);
-  console.log('isVisible===>', isVisible);
-
   if (!isVisible) return null;
 
   if (!isVisible) return null;
