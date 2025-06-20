@@ -2,7 +2,6 @@
 import React, {useRef, useEffect} from 'react';
 import {
   View,
-  Modal,
   Animated,
   Dimensions,
   StyleSheet,
@@ -353,22 +352,25 @@ export const GlobalVideoModal = () => {
 
   if (!isVisible) return null;
 
+  if (!isVisible) return null;
+
   return (
     <>
-      {/* Modal Background and Details - only show when not in PiP */}
-      {/* <Modal
-        visible={isVisible && !isPiP}
-        transparent={true}
-        animationType="none"
-        statusBarTranslucent={true}> */}
-      {/* <StatusBar backgroundColor="#000" barStyle="light-content" /> */}
-      {isVisible && !isPiP && (
+      {/* Full Screen Background - only show when not in PiP */}
+      {!isPiP && (
         <Animated.View
-          style={[styles.modalBackground, {opacity: modalOpacity}]}>
-          {/* Spacer for video */}
-          <View style={styles.videoSpacer} />
+          style={[
+            styles.fullScreenContainer,
+            {
+              opacity: modalOpacity,
+            },
+          ]}>
+          <StatusBar backgroundColor="#000" barStyle="light-content" />
 
-          {/* Video Details */}
+          {/* Video Container */}
+          <View style={styles.videoSection} />
+
+          {/* Details Section */}
           <View style={styles.detailsContainer}>
             <Text style={styles.videoTitle}>{videoData?.title}</Text>
             <Text style={styles.videoDescription}>
@@ -399,122 +401,120 @@ export const GlobalVideoModal = () => {
         </Animated.View>
       )}
 
-      {/* </Modal> */}
+      {/* Video Component - Always on top */}
+      <Animated.View
+        style={[
+          styles.animatedVideoContainer,
+          {
+            transform: [
+              {scale: videoScale},
+              {translateX: videoPosition.x},
+              {translateY: videoPosition.y},
+            ],
+            borderRadius: videoBorderRadius,
+            zIndex: isPiP ? 1000 : 100,
+            elevation: isPiP ? 10 : 5,
+          },
+        ]}
+        {...(isPiP ? panResponder.panHandlers : {})}>
+        <TouchableOpacity
+          onPress={handleVideoPress}
+          style={styles.videoTouchable}
+          activeOpacity={isPiP ? 0.8 : 1}>
+          <Video
+            ref={videoRef}
+            source={{uri: videoData?.url}}
+            style={[styles.singleVideo]}
+            resizeMode={'contain'}
+            paused={!isPlaying}
+            // volume={isPiP ? 0 : volume}
+            // muted={isPiP ? true : isMuted}
+            onLoad={handleVideoLoad}
+            onProgress={handleVideoProgress}
+            onBuffer={handleVideoBuffer}
+            onEnd={handleVideoEnd}
+            progressUpdateInterval={250}
+          />
 
-      {/* Single Video Component with Animated Wrapper - Rendered outside/after Modal */}
-      {isVisible && (
-        <View style={styles.videoWrapper} pointerEvents="box-none">
-          {/* Animated View with PanResponder for PiP drag */}
-          <Animated.View
-            style={[
-              styles.animatedVideoContainer,
-              {
-                transform: [
-                  {scale: videoScale},
-                  {translateX: videoPosition.x},
-                  {translateY: videoPosition.y},
-                ],
-                borderRadius: videoBorderRadius,
-                zIndex: isPiP ? 1000 : 1,
-                elevation: isPiP ? 10 : 1,
-              },
-            ]}
-            {...(isPiP ? panResponder.panHandlers : {})}>
-            <TouchableOpacity
-              onPress={handleVideoPress}
-              style={styles.videoTouchable}
-              activeOpacity={isPiP ? 0.8 : 1}>
-              <Video
-                ref={videoRef}
-                source={{uri: videoData?.url}}
-                style={[styles.singleVideo]}
-                resizeMode={'contain'}
-                paused={!isPlaying}
-                muted={isMuted}
-                onLoad={handleVideoLoad}
-                onProgress={handleVideoProgress}
-                onBuffer={handleVideoBuffer}
-                onEnd={handleVideoEnd}
-                progressUpdateInterval={250}
-              />
+          {/* Controls Overlay - only show when not in PiP */}
+          {!isPiP && (
+            <View style={styles.controlsOverlay}>
+              <View style={styles.topControls}>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  style={styles.controlButton}>
+                  <Ionicons name="chevron-down" size={28} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handlePiPToggle}
+                  style={styles.controlButton}>
+                  <Ionicons name="contract" size={24} color="#fff" />
+                </TouchableOpacity>
+              </View>
 
-              {/* Controls Overlay - only show when not in PiP */}
-              {!isPiP && (
-                <View style={styles.controlsOverlay}>
-                  <View style={styles.topControls}>
-                    <TouchableOpacity
-                      onPress={handleClose}
-                      style={styles.controlButton}>
-                      <Ionicons name="chevron-down" size={28} color="#fff" />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={handlePiPToggle}
-                      style={styles.controlButton}>
-                      <Ionicons name="contract" size={24} color="#fff" />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.centerControls}>
-                    <TouchableOpacity
-                      onPress={handlePlayPause}
-                      style={styles.playButton}>
-                      <Ionicons
-                        name={isPlaying ? 'pause' : 'play'}
-                        size={50}
-                        color="#fff"
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-
-              {/* PiP Controls - only show in PiP mode */}
-              {isPiP && (
-                <View style={styles.pipControls}>
-                  <TouchableOpacity
-                    onPress={handlePlayPause}
-                    style={styles.pipPlayButton}>
-                    <Ionicons
-                      name={isPlaying ? 'pause' : 'play'}
-                      size={16}
-                      color="#fff"
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={handleClose}
-                    style={styles.pipCloseButton}>
-                    <Ionicons name="close" size={16} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {/* PiP Progress Bar */}
-              {isPiP && (
-                <View style={styles.pipProgressContainer}>
-                  <View
-                    style={[
-                      styles.pipProgress,
-                      {width: `${(currentTime / duration) * 100}%`},
-                    ]}
+              <View style={styles.centerControls}>
+                <TouchableOpacity
+                  onPress={handlePlayPause}
+                  style={styles.playButton}>
+                  <Ionicons
+                    name={isPlaying ? 'pause' : 'play'}
+                    size={50}
+                    color="#fff"
                   />
-                </View>
-              )}
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* PiP Controls - only show in PiP mode */}
+          {isPiP && (
+            <View style={styles.pipControls}>
+              <TouchableOpacity
+                onPress={handlePlayPause}
+                style={styles.pipPlayButton}>
+                <Ionicons
+                  name={isPlaying ? 'pause' : 'play'}
+                  size={16}
+                  color="#fff"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={styles.pipCloseButton}>
+                <Ionicons name="close" size={16} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* PiP Progress Bar */}
+          {isPiP && (
+            <View style={styles.pipProgressContainer}>
+              <View
+                style={[
+                  styles.pipProgress,
+                  {width: `${(currentTime / duration) * 100}%`},
+                ]}
+              />
+            </View>
+          )}
+        </TouchableOpacity>
+      </Animated.View>
     </>
   );
 };
 
 const styles = StyleSheet.create({
-  videoWrapper: {
+  fullScreenContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    zIndex: 999,
+    backgroundColor: '#000',
+    zIndex: 10,
+  },
+  videoSection: {
+    height: 300, // Space for video
   },
   animatedVideoContainer: {
     position: 'absolute',
@@ -537,15 +537,6 @@ const styles = StyleSheet.create({
     width: PIP_WIDTH,
     height: PIP_HEIGHT,
   },
-
-  // Modal Background Styles
-  modalBackground: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  videoSpacer: {
-    height: 300, // Space for the video
-  },
   controlsOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between',
@@ -554,7 +545,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 50,
+    paddingTop: 10,
   },
   centerControls: {
     flex: 1,
