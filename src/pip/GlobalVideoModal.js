@@ -134,64 +134,65 @@ export const GlobalVideoModal = () => {
 
   // Update panResponder when isPiP changes
   useEffect(() => {
+    // Store current position for PiP mode
+    const currentPipX = pipPosition.x._value;
+    const currentPipY = pipPosition.y._value;
+
     panResponder.panHandlers = PanResponder.create({
       onStartShouldSetPanResponder: () => isPiP,
       onMoveShouldSetPanResponder: () => isPiP,
       onPanResponderGrant: () => {
         isDragging.current = true;
-        pipPosition.setOffset({
-          x: pipPosition.x._value,
-          y: pipPosition.y._value,
-        });
-        pipPosition.setValue({x: 0, y: 0});
-
-        videoPosition.setOffset({
-          x: videoPosition.x._value,
-          y: videoPosition.y._value,
-        });
-        videoPosition.setValue({x: 0, y: 0});
       },
       onPanResponderMove: (evt, gestureState) => {
         if (isPiP) {
+          const newX = currentPipX + gestureState.dx;
+          const newY = currentPipY + gestureState.dy;
+
           pipPosition.setValue({
-            x: gestureState.dx,
-            y: gestureState.dy,
+            x: newX,
+            y: newY,
           });
 
           videoPosition.setValue({
-            x: gestureState.dx,
-            y: gestureState.dy,
+            x: newX,
+            y: newY - 250,
           });
         }
       },
       onPanResponderRelease: (evt, gestureState) => {
         isDragging.current = false;
-        pipPosition.flattenOffset();
-        videoPosition.flattenOffset();
 
-        const currentX = pipPosition.x._value;
+        const currentX = currentPipX + gestureState.dx;
+        const currentY = currentPipY + gestureState.dy;
+
         const finalX =
           currentX > SCREEN_WIDTH / 2
             ? SCREEN_WIDTH - PIP_WIDTH - MARGIN
             : MARGIN;
+
         const finalY = Math.max(
           50,
-          Math.min(pipPosition.y._value, SCREEN_HEIGHT - PIP_HEIGHT - 100),
+          Math.min(currentY, SCREEN_HEIGHT - PIP_HEIGHT - 100),
         );
 
         Animated.parallel([
           Animated.spring(pipPosition, {
             toValue: {x: finalX, y: finalY},
             useNativeDriver: true,
+            tension: 40,
+            friction: 8,
           }),
           Animated.spring(videoPosition, {
             toValue: {x: finalX, y: finalY - 250},
             useNativeDriver: true,
+            tension: 40,
+            friction: 8,
           }),
         ]).start();
       },
     }).panHandlers;
-  }, [isPiP]);
+  }, [isPiP, pipPosition, videoPosition]);
 
   // Handle modal show/hide animations
   useEffect(() => {
@@ -239,6 +240,16 @@ export const GlobalVideoModal = () => {
   // Handle PiP transitions with single video
   useEffect(() => {
     if (isPiP && isVisible) {
+      // Set initial PiP position
+      const initialPipX = SCREEN_WIDTH - PIP_WIDTH - MARGIN;
+      const initialPipY = SCREEN_HEIGHT - PIP_HEIGHT - 100;
+
+      // Update pip position to initial values
+      pipPosition.setValue({
+        x: initialPipX,
+        y: initialPipY,
+      });
+
       // Transition to PiP mode
       Animated.parallel([
         // Scale down the video
@@ -250,8 +261,8 @@ export const GlobalVideoModal = () => {
         // Move to PiP position
         Animated.timing(videoPosition, {
           toValue: {
-            x: pipPosition.x._value,
-            y: pipPosition.y._value - 250, // Adjust for video container height
+            x: initialPipX,
+            y: initialPipY - 250,
           },
           duration: 400,
           useNativeDriver: true,
@@ -270,6 +281,12 @@ export const GlobalVideoModal = () => {
         }),
       ]).start();
     } else if (isVisible && !isPiP) {
+      // Reset pip position when going back to fullscreen
+      pipPosition.setValue({
+        x: SCREEN_WIDTH - PIP_WIDTH - MARGIN,
+        y: SCREEN_HEIGHT - PIP_HEIGHT - 100,
+      });
+
       // Transition back to full screen
       Animated.parallel([
         // Scale back to full size
